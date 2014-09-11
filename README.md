@@ -8,10 +8,8 @@ Basic support for prepared statements and ad hoc queries. Lacking support for co
 ### Build
 
 1. Build and install the DataStax [C/C++ driver](https://github.com/datastax/cpp-driver)
-1. Clone the repo, and change to the directory.
-1. Set GOPATH to local dir ```export GOPATH=`pwd` ```
-1. Build and install the library ```go build cassandra && go install cassandra```
-1. Build and run the example ```go build examples && ./examples```
+1. Install `go get github.com/mstump/golang-driver/cassandra`
+1. Run the example `go run $GOPATH/src/github.com/mstump/golang-driver/examples/basic.go`
 
 ### Example Usage
 
