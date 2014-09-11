@@ -1,12 +1,13 @@
 golang-driver
 =============
 
-Golang wrapper of the DataStax/Cassandra [C++ driver](https://github.com/datastax/cpp-driver)
+Golang wrapper of the DataStax/Cassandra [C/C++ driver](https://github.com/datastax/cpp-driver)
 
 Basic support for prepared statements and ad hoc queries. Lacking support for collections, but that will be remedied shortly.
 
 ### Build
 
+1. Build and install the DataStax [C/C++ driver](https://github.com/datastax/cpp-driver)
 1. Clone the repo, and change to the directory.
 1. Set GOPATH to local dir ```export GOPATH=`pwd` ```
 1. Build and install the library ```go build cassandra && go install cassandra```
