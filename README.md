@@ -14,7 +14,7 @@ Basic support for prepared statements and ad hoc queries. Lacking support for co
 
 ### Example Usage
 
-```golang
+```go
 package main
 
 import (
