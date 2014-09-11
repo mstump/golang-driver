@@ -5,7 +5,14 @@ Golang wrapper of the DataStax/Cassandra [C++ driver](https://github.com/datasta
 
 Basic support for prepared statements and ad hoc queries. Lacking support for collections, but that will be remedied shortly.
 
-## Example Usage
+### Build
+
+1. Clone the repo, and change to the directory.
+1. Set GOPATH to local dir ```export GOPATH=`pwd` ```
+1. Build and install the library ```go build cassandra && go install cassandra```
+1. Build and run the example ```go build examples && ./examples```
+
+### Example Usage
 
 ```golang
 package main
