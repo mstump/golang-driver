@@ -32,59 +32,59 @@ const (
 	CASS_VALUE_TYPE_SET       = 0x0022
 )
 
-type CassCluster struct {
+type Cluster struct {
 	cptr *C.struct_CassCluster_
 }
 
-type CassFuture struct {
+type Future struct {
 	cptr *C.struct_CassFuture_
 }
 
-type CassSession struct {
+type Session struct {
 	cptr *C.struct_CassSession_
 }
 
-type CassResult struct {
+type Result struct {
 	iter *C.struct_CassIterator_
 	cptr *C.struct_CassResult_
 }
 
-type CassPrepared struct {
+type Prepared struct {
 	cptr *C.struct_CassPrepared_
 }
 
-type CassStatement struct {
+type Statement struct {
 	cptr *C.struct_CassStatement_
 }
 
-func NewCassCluster() *CassCluster {
-	cluster := new(CassCluster)
+func NewCluster() *Cluster {
+	cluster := new(Cluster)
 	cluster.cptr = C.cass_cluster_new()
 	// defer cluster.Finalize()
 
 	return cluster
 }
 
-func NewCassStatement(query string, param_count int) *CassStatement {
+func NewStatement(query string, param_count int) *Statement {
 	var cass_query C.struct_CassString_
 	cass_query.data = C.CString(query)
 	cass_query.length = C.cass_size_t(len(query))
 	defer C.free(unsafe.Pointer(cass_query.data))
 
-	statement := new(CassStatement)
+	statement := new(Statement)
 	statement.cptr = C.cass_statement_new(cass_query, C.cass_size_t(param_count))
 	// defer statement.Finalize()
 	return statement
 }
 
-func (prepared *CassPrepared) Bind() *CassStatement {
-	statement := new(CassStatement)
+func (prepared *Prepared) Bind() *Statement {
+	statement := new(Statement)
 	statement.cptr = C.cass_prepared_bind(prepared.cptr)
 	// defer statement.Finalize()
 	return statement
 }
 
-func (statement *CassStatement) Bind(args ...interface{}) error {
+func (statement *Statement) Bind(args ...interface{}) error {
 	var err C.CassError = C.CASS_OK
 
 	for i, v := range args {
@@ -136,125 +136,125 @@ func (statement *CassStatement) Bind(args ...interface{}) error {
 	return nil
 }
 
-func (cluster *CassCluster) Finalize() {
+func (cluster *Cluster) Finalize() {
 	C.cass_cluster_free(cluster.cptr)
 	cluster.cptr = nil
 }
 
-func (future *CassFuture) Finalize() {
+func (future *Future) Finalize() {
 	C.cass_future_free(future.cptr)
 	future.cptr = nil
 }
 
-func (result *CassResult) Finalize() {
+func (result *Result) Finalize() {
 	C.cass_result_free(result.cptr)
 	result.cptr = nil
 }
 
-func (prepared *CassPrepared) Finalize() {
+func (prepared *Prepared) Finalize() {
 	C.cass_prepared_free(prepared.cptr)
 	prepared.cptr = nil
 }
 
-func (statement *CassStatement) Finalize() {
+func (statement *Statement) Finalize() {
 	C.cass_statement_free(statement.cptr)
 	statement.cptr = nil
 }
 
-func (future *CassFuture) Session() *CassSession {
-	session := new(CassSession)
+func (future *Future) Session() *Session {
+	session := new(Session)
 	session.cptr = C.cass_future_get_session(future.cptr)
 	return session
 }
 
-func (future *CassFuture) Result() *CassResult {
-	result := new(CassResult)
+func (future *Future) Result() *Result {
+	result := new(Result)
 	result.cptr = C.cass_future_get_result(future.cptr)
 	// defer result.Finalize()
 	return result
 }
 
-func (future *CassFuture) Prepared() *CassPrepared {
-	prepared := new(CassPrepared)
+func (future *Future) Prepared() *Prepared {
+	prepared := new(Prepared)
 	prepared.cptr = C.cass_future_get_prepared(future.cptr)
 	// defer prepared.Finalize()
 	return prepared
 }
 
-func (future *CassFuture) Ready() bool {
+func (future *Future) Ready() bool {
 	return C.cass_future_ready(future.cptr) == C.cass_true
 }
 
-func (future *CassFuture) Wait() {
+func (future *Future) Wait() {
 	C.cass_future_wait(future.cptr)
 }
 
-func (future *CassFuture) WaitTimed(timeout uint64) bool {
+func (future *Future) WaitTimed(timeout uint64) bool {
 	return C.cass_future_wait_timed(future.cptr, C.cass_duration_t(timeout)) == C.cass_true
 }
 
-func (cluster *CassCluster) SetContactPoints(contactPoints string) {
+func (cluster *Cluster) SetContactPoints(contactPoints string) {
 	contacts_cstr := C.CString(contactPoints)
 	defer C.free(unsafe.Pointer(contacts_cstr))
 	C.cass_cluster_set_contact_points(cluster.cptr, contacts_cstr)
 }
 
-func (cluster *CassCluster) SetPort(port int64) {
+func (cluster *Cluster) SetPort(port int64) {
 	port_cint := C.int(port)
 	C.cass_cluster_set_port(cluster.cptr, port_cint)
 }
 
-func (cluster *CassCluster) Connect() *CassFuture {
-	future := new(CassFuture)
+func (cluster *Cluster) Connect() *Future {
+	future := new(Future)
 	future.cptr = C.cass_cluster_connect(cluster.cptr)
 	// defer future.Finalize()
 	return future
 }
 
-func (cluster *CassCluster) ConnectKeyspace(keyspace string) *CassFuture {
+func (cluster *Cluster) ConnectKeyspace(keyspace string) *Future {
 	keyspace_cstr := C.CString(keyspace)
 	defer C.free(unsafe.Pointer(keyspace_cstr))
-	future := new(CassFuture)
+	future := new(Future)
 	future.cptr = C.cass_cluster_connect_keyspace(cluster.cptr, keyspace_cstr)
 	// defer future.Finalize()
 	return future
 }
 
-func (session *CassSession) Execute(statement *CassStatement) *CassFuture {
-	future := new(CassFuture)
+func (session *Session) Execute(statement *Statement) *Future {
+	future := new(Future)
 	future.cptr = C.cass_session_execute(session.cptr, statement.cptr)
 	return future
 }
 
-func (result *CassResult) RowCount() uint64 {
+func (result *Result) RowCount() uint64 {
 	return uint64(C.cass_result_row_count(result.cptr))
 }
 
-func (result *CassResult) ColumnCount() uint64 {
+func (result *Result) ColumnCount() uint64 {
 	return uint64(C.cass_result_column_count(result.cptr))
 }
 
-func (result *CassResult) ColumnName(index uint64) string {
+func (result *Result) ColumnName(index uint64) string {
 	column_name := C.cass_result_column_name(result.cptr, C.cass_size_t(index))
 	return C.GoStringN(column_name.data, C.int(column_name.length))
 }
 
-func (result *CassResult) ColumnType(index uint64) int {
+func (result *Result) ColumnType(index uint64) int {
 	return int(C.cass_result_column_type(result.cptr, C.cass_size_t(index)))
 }
 
-func (result *CassResult) HasMorePages() bool {
+func (result *Result) HasMorePages() bool {
 	return C.cass_result_has_more_pages(result.cptr) != 0
 }
 
-func (result *CassResult) Next() bool {
+func (result *Result) Next() bool {
 	if result.iter == nil {
 		result.iter = C.cass_iterator_from_result(result.cptr)
 	}
 	return C.cass_iterator_next(result.iter) != 0
 }
 
-func (result *CassResult) Scan(args ...interface{}) error {
+func (result *Result) Scan(args ...interface{}) error {
 
 	if result.ColumnCount() != uint64(len(args)) {
 		errors.New("invalid argument count")
