@@ -57,6 +57,11 @@ type Statement struct {
 	cptr *C.struct_CassStatement_
 }
 
+type Uuid struct {
+	time C.cass_uint64_t
+	data [16]C.cass_uint8_t
+}
+
 func NewCluster() *Cluster {
 	cluster := new(Cluster)
 	cluster.cptr = C.cass_cluster_new()
@@ -75,6 +80,26 @@ func NewStatement(query string, param_count int) *Statement {
 	statement.cptr = C.cass_statement_new(cass_query, C.cass_size_t(param_count))
 	// defer statement.Finalize()
 	return statement
+}
+
+func NewUuidGenerateTime() *Uuid {
+	var data [16]C.cass_uint8_t
+	C.cass_uuid_generate_time(&data[0])
+
+	uuid := new(Uuid)
+	uuid.data = data
+	return uuid
+
+}
+
+func NewUuidFromTime(time uint64) *Uuid {	
+	uuid := new(Uuid)
+	uuid.time = C.cass_uint64_t(time)
+
+	var data [16]C.cass_uint8_t
+	C.cass_uuid_from_time(uuid.time, &data[0])
+	uuid.data = data
+	return uuid
 }
 
 func (prepared *Prepared) Bind() *Statement {
@@ -113,6 +138,9 @@ func (statement *Statement) Bind(args ...interface{}) error {
 				err = C.cass_statement_bind_bool(statement.cptr, C.cass_size_t(i), 0)
 			}
 
+		case Uuid:
+			err = C.cass_statement_bind_uuid(statement.cptr, C.cass_size_t(i), &v.data[0])
+
 		case string:
 			var str C.CassString
 			str.data = C.CString(v)
@@ -125,6 +153,7 @@ func (statement *Statement) Bind(args ...interface{}) error {
 			bytes.data = (*C.cass_byte_t)(unsafe.Pointer(&v))
 			bytes.size = C.cass_size_t(len(v))
 			err = C.cass_statement_bind_bytes(statement.cptr, C.cass_size_t(i), bytes)
+
 		}
 
 	}
