@@ -65,6 +65,12 @@ func NewCluster() *Cluster {
 	return cluster
 }
 
+func NewSession() *Session {
+	session := new(Session)
+	session.cptr = C.cass_session_new()
+	return session
+}
+
 func NewStatement(query string, param_count int) *Statement {
 	var cass_query C.struct_CassString_
 	cass_query.data = C.CString(query)
@@ -141,6 +147,11 @@ func (cluster *Cluster) Finalize() {
 	cluster.cptr = nil
 }
 
+func (session *Session) Finalize() {
+	C.cass_session_free(session.cptr)
+	session.cptr = nil
+}
+
 func (future *Future) Finalize() {
 	C.cass_future_free(future.cptr)
 	future.cptr = nil
@@ -161,11 +172,7 @@ func (statement *Statement) Finalize() {
 	statement.cptr = nil
 }
 
-func (future *Future) Session() *Session {
-	session := new(Session)
-	session.cptr = C.cass_future_get_session(future.cptr)
-	return session
-}
+
 
 func (future *Future) Result() *Result {
 	result := new(Result)
@@ -204,19 +211,9 @@ func (cluster *Cluster) SetPort(port int64) {
 	C.cass_cluster_set_port(cluster.cptr, port_cint)
 }
 
-func (cluster *Cluster) Connect() *Future {
+func (cluster *Cluster) SessionConnect(session *Session) *Future {
 	future := new(Future)
-	future.cptr = C.cass_cluster_connect(cluster.cptr)
-	// defer future.Finalize()
-	return future
-}
-
-func (cluster *Cluster) ConnectKeyspace(keyspace string) *Future {
-	keyspace_cstr := C.CString(keyspace)
-	defer C.free(unsafe.Pointer(keyspace_cstr))
-	future := new(Future)
-	future.cptr = C.cass_cluster_connect_keyspace(cluster.cptr, keyspace_cstr)
-	// defer future.Finalize()
+	future.cptr = C.cass_session_connect(session.cptr, cluster.cptr)
 	return future
 }
 
