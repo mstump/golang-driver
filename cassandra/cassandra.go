@@ -57,6 +57,14 @@ type Statement struct {
 	cptr *C.struct_CassStatement_
 }
 
+type Uuid struct {
+	cptr *C.struct_CassUuid_
+}
+
+type UuidGenerator struct {
+	cptr *C.struct_CassUuidGen_
+}
+
 func NewCluster() *Cluster {
 	cluster := new(Cluster)
 	cluster.cptr = C.cass_cluster_new()
@@ -82,6 +90,37 @@ func NewStatement(query string, param_count int) *Statement {
 	// defer statement.Finalize()
 	return statement
 }
+
+func NewUuidGenerator() *UuidGenerator {
+	generator := new(UuidGenerator)
+	generator.cptr = C.cass_uuid_gen_new()
+	return generator
+}
+
+func NewUuidGeneratorWithNode(node uint64) *UuidGenerator {
+	generator := new(UuidGenerator)
+	generator.cptr = C.cass_uuid_gen_new_with_node(C.cass_uint64_t(node))
+	return generator
+}
+
+func (generator *UuidGenerator) NewUuidGenTime() *Uuid {
+	uuid := new(Uuid)
+	C.cass_uuid_gen_time(generator.cptr, uuid.cptr)
+	return uuid
+}
+
+func (generator *UuidGenerator) NewUuidGenRandom() *Uuid {
+	uuid := new(Uuid)
+	C.cass_uuid_gen_random(generator.cptr, uuid.cptr)
+	return uuid
+}
+
+func (generator *UuidGenerator) NewUuidFromTime(timestamp uint64) *Uuid {
+	uuid := new(Uuid)
+	C.cass_uuid_gen_from_time(generator.cptr, C.cass_uint64_t(timestamp), uuid.cptr)
+	return uuid
+}
+
 
 func (prepared *Prepared) Bind() *Statement {
 	statement := new(Statement)
@@ -131,6 +170,9 @@ func (statement *Statement) Bind(args ...interface{}) error {
 			bytes.data = (*C.cass_byte_t)(unsafe.Pointer(&v))
 			bytes.size = C.cass_size_t(len(v))
 			err = C.cass_statement_bind_bytes(statement.cptr, C.cass_size_t(i), bytes)
+
+		case Uuid:
+			C.cass_statement_bind_uuid(statement.cptr, C.cass_size_t(i), *v.cptr)
 		}
 
 	}
@@ -170,6 +212,11 @@ func (prepared *Prepared) Finalize() {
 func (statement *Statement) Finalize() {
 	C.cass_statement_free(statement.cptr)
 	statement.cptr = nil
+}
+
+func (generator *UuidGenerator) Finalize() {
+	C.cass_uuid_gen_free(generator.cptr)
+	generator.cptr = nil
 }
 
 
