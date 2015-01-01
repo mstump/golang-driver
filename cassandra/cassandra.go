@@ -171,7 +171,7 @@ func (statement *Statement) Bind(args ...interface{}) error {
 			bytes.size = C.cass_size_t(len(v))
 			err = C.cass_statement_bind_bytes(statement.cptr, C.cass_size_t(i), bytes)
 
-		case Uuid:
+		case *Uuid:
 			C.cass_statement_bind_uuid(statement.cptr, C.cass_size_t(i), *v.cptr)
 		}
 
