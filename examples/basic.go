@@ -7,17 +7,25 @@ import (
 
 func main() {
 	cluster := cassandra.NewCluster()
-	cluster.SetContactPoints("127.0.0.1")
+	cluster.SetContactPoints("cassandra")
+	defer cluster.Finalize()
 
-	sessionFuture := cluster.Connect()
-	sessionFuture.Wait()
-	session := sessionFuture.Session()
+	session := cassandra.NewSession()
+	defer session.Finalize()
+
+	sessfuture := cluster.SessionConnect(session)
+	sessfuture.Wait()
+	defer sessfuture.Finalize()
 
 	statement := cassandra.NewStatement("select cluster_name from system.local;", 0)
-	future := session.Execute(statement)
-	future.Wait()
+	defer statement.Finalize()
 
-	result := future.Result()
+	stmtfuture := session.Execute(statement)
+	stmtfuture.Wait()
+	defer stmtfuture.Finalize()
+
+	result := stmtfuture.Result()
+	defer result.Finalize()
 
 	fmt.Printf("Clusters:\r\n")
 	for result.Next() {
