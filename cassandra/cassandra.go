@@ -1,6 +1,7 @@
 package cassandra
 
-// #cgo LDFLAGS: -lcassandra
+// #cgo CFLAGS: -I/usr/local/include
+// #cgo LDFLAGS: -lcassandra -L/usr/local/lib
 // #include <stdlib.h>
 // #include <cassandra.h>
 import "C"
