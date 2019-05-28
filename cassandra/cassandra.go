@@ -275,7 +275,6 @@ func (generator *UuidGenerator) FromTime(timestamp uint64) Uuid {
 func (prepared *Prepared) Bind() *Statement {
 	statement := new(Statement)
 	statement.cptr = C.cass_prepared_bind(prepared.cptr)
-	// defer statement.Finalize()
 	return statement
 }
 
@@ -370,15 +369,14 @@ func (generator *UuidGenerator) Finalize() {
 
 func (future *Future) Result() *Result {
 	result := new(Result)
-	result.cptr = C.cass_future_get_result(future.cptr)
-	// defer result.Finalize()
+	cptr := C.cass_future_get_result(future.cptr)
+	result.cptr = cptr
 	return result
 }
 
 func (future *Future) Prepared() *Prepared {
 	prepared := new(Prepared)
 	prepared.cptr = C.cass_future_get_prepared(future.cptr)
-	// defer prepared.Finalize()
 	return prepared
 }
 
@@ -606,6 +604,14 @@ func (result *Result) HasMorePages() bool {
 	return C.cass_result_has_more_pages(result.cptr) != 0
 }
 
+func (statement *Statement) SetPaginState(result *Result) {
+	C.cass_statement_set_paging_state(statement.cptr, result.cptr)
+}
+
+func (statement *Statement) SetPageSize(pageSize int32) {
+	C.cass_statement_set_paging_size(statement.cptr, C.int(pageSize))
+}
+
 func (result *Result) Next() bool {
 	if result.iter == nil {
 		result.iter = C.cass_iterator_from_result(result.cptr)
@@ -629,22 +635,23 @@ func (result *Result) Scan(args ...interface{}) error {
 		switch v := v.(type) {
 
 		case *string:
-			// var str unsafe.Pointer
-			// var length int64
-			// err = C.cass_value_get_string(value, &str, &length)
-			// if err != C.CASS_OK {
-			// 	return errors.New(C.GoString(C.cass_error_desc(err)))
-			// }
-			// *v = C.GoStringN(str, length)
+			var str *C.char
+			var length C.ulong
+			err = C.cass_value_get_string(value, &str, &length)
+			if err != C.CASS_OK {
+				return errors.New(C.GoString(C.cass_error_desc(err)))
+			}
+			*v = C.GoString(str)
 
 		case *[]byte:
-			// var b *[]byte
-			// var l int64
-			// err = C.cass_value_get_bytes(value, &b, &l)
-			// if err != C.CASS_OK {
-			// 	return errors.New(C.GoString(C.cass_error_desc(err)))
-			// }
-			// *v = C.GoBytes(unsafe.Pointer(b), l)
+			var bytes *C.uchar
+			var len C.ulong
+			err = C.cass_value_get_bytes(value, &bytes, &len)
+			if err != C.CASS_OK {
+				return errors.New(C.GoString(C.cass_error_desc(err)))
+			}
+			length := C.int(len)
+			*v = C.GoBytes(unsafe.Pointer(bytes), length)
 
 		case *int32:
 			var i32 C.cass_int32_t
